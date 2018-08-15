@@ -1,0 +1,111 @@
+version: '3'
+services:
+  api:
+    container_name: api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./api:/var/www/app
+      - ./docker_build:/usr/share/docker_build
+    ports:
+      - 8080:80
+      - 8443:443
+    environment:
+      - PHP_ENVIRONMENT=development
+      - APP_DEBUG=true
+      - APP_ENV=develop 
+    links:
+      # - elasticsearch
+      - beanstalkd
+ 
+  spa:
+    container_name: spa
+    build:
+        context: .
+        dockerfile: ./spa/Dockerfile.local
+    volumes:
+        - ./spa/src:/usr/src 
+    ports: 
+      - 8082:80
+      - 3000:3000
+  mysql:
+    container_name: mysql
+    image: mysql/mysql-server:5.7
+    ports:
+      - 3307:3306
+    environment:
+      - MYSQL_USER=app_user   
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=app_database
+      - MYSQL_ROOT_HOST=%
+    volumes:
+      - ./docker/database:/var/lib/mysql/
+      
+  console:
+    container_name: beanstalk-console
+    image: agaveapi/beanstalkd-console
+    ports:
+      - 900:80
+    environment:
+      - BEANSTALKD_HOST=beanstalkd
+    links:
+      - beanstalkd
+
+
+  beanstalkd:
+    container_name: beanstalkd
+    image: kamilzabielski/docker-alpine-beanstalkd
+    volumes:
+      - beanstalkd_data:/var/lib/beanstald
+
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+  #   container_name: elasticsearch
+  #   environment:
+  #     - cluster.name=docker-cluster
+  #     - bootstrap.memory_lock=true
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   volumes:
+  #     - esdata1:/usr/share/elasticsearch/data
+  #   ports:
+  #     - 9200:9200
+  #   networks:
+  #     - esnet
+  # elasticsearch2:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:6.3.2
+  #   container_name: elasticsearch2
+  #   environment:
+  #     - cluster.name=docker-cluster
+  #     - bootstrap.memory_lock=true
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #     - "discovery.zen.ping.unicast.hosts=elasticsearch"
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   volumes:
+  #     - esdata2:/usr/share/elasticsearch/data
+  #   networks:
+  #     - esnet
+
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:6.3.2
+  #   volumes:
+  #     - ./kibana.yml:/usr/share/kibana/config/kibana.yml  
+  #   ports:
+  #     - 5601:5601
+
+volumes:
+  # esdata1:
+  #   driver: local
+  # esdata2:
+  #   driver: local
+  beanstalkd_data:
+# networks:
+#   esnet:

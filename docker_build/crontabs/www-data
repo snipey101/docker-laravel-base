@@ -1,0 +1,4 @@
+# NOTE: a blank line is required at the end of this file.
+
+* * * * * /usr/local/bin/run-on-leader-wrapper.sh /usr/local/bin/php /var/www/journals-migrator/artisan schedule:run >> /var/www/journals-migrator/cron.log 2>&1
+
